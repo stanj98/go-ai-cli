@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/openai/openai-go/v2"
 	"github.com/openai/openai-go/v2/option"
@@ -36,11 +38,37 @@ func main() {
 		Messages: messages,
 	}
 
-	res, err := client.Chat.Completions.New(ctx, params)
-	if err != nil {
-		log.Fatal(err)
-	}
+	scanner := bufio.NewScanner(os.Stdin)
+	for {
+		fmt.Print("> ")
+		if !scanner.Scan() {
+			break
+		}
+		input := strings.TrimSpace(scanner.Text())
+		if input == "" {
+			continue
+		}
+		if input == "clear" {
+			fmt.Print("\033[H\033[2J")
+			continue
+		}
+		if input == "exit" {
+			fmt.Println("goodbye")
+			break
+		}
 
-	fmt.Print(res.Choices[0].Message.Content)
+		params.Messages = append(params.Messages, openai.UserMessage(input))
+
+		res, err := client.Chat.Completions.New(ctx, params)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		//append the answer of LLM to params messages
+		output := res.Choices[0].Message.Content
+		fmt.Printf(output)
+
+		params.Messages = append(params.Messages, openai.AssistantMessage(output))
+	}
 
 }
