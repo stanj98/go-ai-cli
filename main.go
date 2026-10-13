@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/openai/openai-go/v2"
 	"github.com/openai/openai-go/v2/option"
 )
@@ -39,8 +40,9 @@ func main() {
 	}
 
 	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Print(color.WhiteString(fmt.Sprintf("model: %s", model)))
 	for {
-		fmt.Print("> ")
+		fmt.Print(color.CyanString("\n> "))
 		if !scanner.Scan() {
 			break
 		}
@@ -66,9 +68,16 @@ func main() {
 
 		//append the answer of LLM to params messages
 		output := res.Choices[0].Message.Content
-		fmt.Printf(output)
+		fmt.Printf(color.YellowString(output))
 
 		params.Messages = append(params.Messages, openai.AssistantMessage(output))
+
+		count := len(params.Messages)
+		fmt.Println(color.MagentaString(fmt.Sprintf("count: %d", count)))
+		if count >= 10 {
+			params.Messages = params.Messages[count-4:]
+			fmt.Println("history refreshed!")
+		}
 	}
 
 }
